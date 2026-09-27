@@ -15,6 +15,14 @@ import {
 } from '../data/initialData';
 import { supabase, testSupabaseConnection, SUPABASE_PROJECT_ID } from '../lib/supabase';
 
+export const AUTHORIZED_ADMIN = {
+  email: 'siddappambadiger051@gmail.com',
+  defaultPassword: 'Siddhappa@143',
+  name: 'Siddhappa M Badiger',
+  role: 'Super Admin & Software Controller',
+  institution: 'Government ITI College, Jewargi',
+};
+
 const STORAGE_KEYS = {
   APPOINTMENTS: 'iti_jwg_appointments_v1',
   TRADES: 'iti_jwg_trades_v1',
@@ -22,6 +30,7 @@ const STORAGE_KEYS = {
   FAQS: 'iti_jwg_faqs_v1',
   SETTINGS: 'iti_jwg_settings_v1',
   ADMIN_TOKEN: 'iti_jwg_admin_token_v1',
+  ADMIN_USER: 'iti_jwg_admin_user_v1',
 };
 
 // Seed local storage if empty
@@ -765,16 +774,70 @@ export const api = {
     };
   },
 
-  // Admin authentication
-  async adminLogin(password: string): Promise<{ success: boolean; token?: string; error?: string }> {
-    // Verified admin key for Government ITI Jewargi administration
-    const VALID_ADMIN_PINS = ['iti@jewargi2026', 'admin123', 'iti2026'];
-    if (VALID_ADMIN_PINS.includes(password.trim())) {
-      const token = `adm_token_${Date.now()}_${Math.random().toString(36).substring(2)}`;
-      localStorage.setItem(STORAGE_KEYS.ADMIN_TOKEN, token);
-      return { success: true, token };
+  // Admin authentication (Restricted Exclusively to Designated Super Administrator)
+  async adminLogin(email: string, password: string): Promise<{ success: boolean; token?: string; error?: string; user?: any }> {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanPassword = (password || '').trim();
+
+    if (!cleanEmail || !cleanPassword) {
+      return { success: false, error: 'Please enter both administrator email and password.' };
     }
-    return { success: false, error: 'Invalid administrative password. Please check your credentials.' };
+
+    // Attempt server-side authentication first
+    try {
+      const res = await fetch('/api/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, password: cleanPassword }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        localStorage.setItem(STORAGE_KEYS.ADMIN_TOKEN, data.token);
+        if (data.user) {
+          localStorage.setItem(STORAGE_KEYS.ADMIN_USER, JSON.stringify(data.user));
+        }
+        return { success: true, token: data.token, user: data.user };
+      }
+      if (!res.ok) {
+        return {
+          success: false,
+          error: data.error || 'Access Denied: Administrative authentication failed.',
+        };
+      }
+    } catch {
+      // Local verification fallback if server is unreachable
+    }
+
+    // Direct check for authorized admin
+    if (cleanEmail === AUTHORIZED_ADMIN.email.toLowerCase() && cleanPassword === AUTHORIZED_ADMIN.defaultPassword) {
+      const token = `adm_token_${Date.now()}_${Math.random().toString(36).substring(2)}`;
+      const user = {
+        email: AUTHORIZED_ADMIN.email,
+        name: AUTHORIZED_ADMIN.name,
+        role: AUTHORIZED_ADMIN.role,
+        institution: AUTHORIZED_ADMIN.institution,
+        authenticatedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(STORAGE_KEYS.ADMIN_TOKEN, token);
+      localStorage.setItem(STORAGE_KEYS.ADMIN_USER, JSON.stringify(user));
+      return { success: true, token, user };
+    }
+
+    return {
+      success: false,
+      error: 'Access Denied: Invalid administrator email or password. Access is strictly restricted.',
+    };
+  },
+
+  getAdminUser(): { email: string; name: string; role: string; institution?: string } | null {
+    if (typeof window === 'undefined') return null;
+    const stored = localStorage.getItem(STORAGE_KEYS.ADMIN_USER);
+    if (!stored) return null;
+    try {
+      return JSON.parse(stored);
+    } catch {
+      return null;
+    }
   },
 
   isAdminLoggedIn(): boolean {
@@ -785,5 +848,6 @@ export const api = {
   adminLogout(): void {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(STORAGE_KEYS.ADMIN_TOKEN);
+    localStorage.removeItem(STORAGE_KEYS.ADMIN_USER);
   },
 };

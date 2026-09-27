@@ -200,7 +200,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   }}
                   className="text-slate-600 font-medium hover:underline flex items-center gap-1"
                 >
-                  <ShieldCheck className="w-3 h-3" /> Administration Portal
+                  <ShieldCheck className="w-3 h-3 text-sky-600" /> Admin & Developer Portal
                 </button>
               </div>
             </div>

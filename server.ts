@@ -295,19 +295,31 @@ app.delete('/api/appointments/:id', async (req: Request, res: Response) => {
   }
 });
 
-// Admin Login
+// Admin Login (Strict Single-Admin Access)
+const AUTHORIZED_ADMIN_EMAIL = 'siddappambadiger051@gmail.com';
+const AUTHORIZED_ADMIN_PASSWORD = 'Siddhappa@143';
+
 app.post('/api/admin/login', (req: Request, res: Response) => {
-  const { password } = req.body;
-  const VALID_PINS = ['iti@jewargi2026', 'admin123', 'iti2026'];
-  if (VALID_PINS.includes((password || '').trim())) {
+  const { email, password } = req.body;
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const cleanPass = (password || '').trim();
+
+  if (cleanEmail === AUTHORIZED_ADMIN_EMAIL && cleanPass === AUTHORIZED_ADMIN_PASSWORD) {
     res.json({
       success: true,
-      token: `adm_${Date.now()}_auth`,
-      role: 'Super Administrator',
-      institute: 'Government ITI College, Jewargi'
+      token: `adm_${Date.now()}_auth_${Math.random().toString(36).substring(2)}`,
+      user: {
+        email: AUTHORIZED_ADMIN_EMAIL,
+        name: 'Siddhappa M Badiger',
+        role: 'Super Administrator & Software Controller',
+        institute: 'Government ITI College, Jewargi',
+      },
     });
   } else {
-    res.status(401).json({ success: false, error: 'Invalid administrative password' });
+    res.status(401).json({
+      success: false,
+      error: 'Access Denied: Invalid administrator credentials.',
+    });
   }
 });
 

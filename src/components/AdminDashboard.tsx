@@ -74,6 +74,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   settings,
   onRefreshData,
 }) => {
+  const adminUser = api.getAdminUser();
   const [activeTab, setActiveTab] = useState<'appointments' | 'schedule' | 'trades' | 'notices' | 'faqs' | 'contact' | 'database'>('appointments');
 
   // Supabase connection state
@@ -424,6 +425,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     onRefreshData();
   };
 
+  if (!isOpen) return null;
+
+  // Strict Security: Prevent rendering if not authenticated
+  if (!api.isAdminLoggedIn()) {
+    return null;
+  }
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
       <div className="bg-white rounded-lg max-w-7xl w-full h-[95vh] shadow-2xl border border-slate-200 text-left relative flex flex-col overflow-hidden">
@@ -447,6 +455,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Authorized Admin Identity */}
+            <div className="hidden xl:flex items-center gap-2 px-2.5 py-1 rounded bg-sky-950/80 border border-sky-400/30 text-xs text-sky-200">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <div className="flex flex-col text-left leading-tight">
+                <span className="text-[9px] text-sky-300 uppercase tracking-wider font-semibold">Super Admin & Controller</span>
+                <span className="font-mono font-bold text-white text-[11px]">{adminUser?.email || 'Super Administrator'}</span>
+              </div>
+            </div>
+
             {/* Sync with Supabase Button */}
             <button
               onClick={handleSyncSupabase}
@@ -1238,6 +1255,40 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           {/* Supabase Cloud Database Tab */}
           {activeTab === 'database' && (
             <div className="max-w-4xl mx-auto space-y-6 text-xs text-left">
+              {/* Security & Access Controller Card */}
+              <div className="bg-sky-50/70 p-5 rounded-lg border border-sky-200 shadow-2xs space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-sky-200/80">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-[#0f2b48]" />
+                    <span className="text-sm font-bold text-[#0f2b48] font-institutional">
+                      Authorized Software Developer & System Controller
+                    </span>
+                  </div>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-semibold px-2 py-0.5 rounded border border-emerald-300 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                    Access Clearance Active
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-[10px] uppercase font-mono text-slate-500 font-semibold block">Authenticated Administrator:</span>
+                    <span className="font-mono font-bold text-slate-900">{adminUser?.email || 'Super Administrator'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-mono text-slate-500 font-semibold block">Administrative Role:</span>
+                    <span className="font-semibold text-slate-900">{adminUser?.role || 'Super Admin & Software Controller'}</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-mono text-slate-500 font-semibold block">Institution:</span>
+                    <span className="text-slate-800">Government ITI College, Jewargi</span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] uppercase font-mono text-slate-500 font-semibold block">Access Policy:</span>
+                    <span className="text-amber-800 font-medium">Single Admin Only (Restricted from Public & General Staff)</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Connection Status Card */}
               <div className="bg-white p-6 rounded-lg border border-slate-200 shadow-2xs space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-200 gap-3">
