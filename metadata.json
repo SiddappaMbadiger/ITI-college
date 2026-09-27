@@ -1,0 +1,7 @@
+{
+  "name": "Government ITI College, Jewargi",
+  "description": "Official appointment booking and information portal for Government ITI College, Jewargi, Kalaburagi, Karnataka. Explore vocational trades, admission guidelines, campus facilities, and schedule counselling.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
